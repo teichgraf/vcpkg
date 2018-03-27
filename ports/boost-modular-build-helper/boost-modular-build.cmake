@@ -137,6 +137,7 @@ function(boost_modular_build)
     ######################
     # Generate configuration
     ######################
+    string(REPLACE "-" "_" BOOST_TARGET_NAME "${PORT}")
     list(APPEND _bm_OPTIONS
         -j${NUMBER_OF_PROCESSORS}
         --debug-configuration

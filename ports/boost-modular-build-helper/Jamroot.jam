@@ -16,10 +16,10 @@ project boost : requirements
 
 rule boost-install ( libraries * )
 {
-    stagedir = [ option.get stagedir ] ;
+    builddir = [ option.get builddir ] ;
     install stage
         : $(libraries)
-        : <location>$(stagedir)/lib ;
+        : <location>$(builddir)/lib ;
 }
 
 rule tag ( name : type ? : property-set )
@@ -144,7 +144,3 @@ rule boost-lib ( name : sources * : requirements * : default-build * : usage-req
     lib $(name) : $(sources) : $(requirements) : $(default-build) : $(usage-requirements) ;
     boost-install $(name) ;
 }
-
-use-project /boost/@PORT@ : build ;
-
-build-project build ;

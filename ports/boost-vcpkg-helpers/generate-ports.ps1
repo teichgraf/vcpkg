@@ -13,8 +13,9 @@ function Generate()
     param (
         [string]$Name,
         [string]$Hash,
+        [string[]]$Targets,
         [bool]$NeedsBuild,
-        $Depends = @()
+        $Depends
     )
 
     $controlDeps = ($Depends | sort) -join ", "
@@ -88,6 +89,8 @@ function Generate()
 
     if ($NeedsBuild)
     {
+        $spacedTargets = $Targets -join " "
+
         if ($Name -eq "locale")
         {
             $portfileLines += @(
@@ -103,7 +106,7 @@ function Generate()
                 "    OPTIONS"
                 "        boost.locale.iconv=off"
                 "        boost.locale.posix=off"
-                "        /boost/locale//boost_locale"
+                "        build//boost_locale"
                 "        boost.locale.icu=`${BOOST_LOCALE_ICU}"
                 ")"
             )
@@ -118,28 +121,26 @@ function Generate()
                 "endif()"
                 ""
                 "include(`${CURRENT_INSTALLED_DIR}/share/boost-build/boost-modular-build.cmake)"
-                "boost_modular_build(SOURCE_PATH `${SOURCE_PATH} REQUIREMENTS `"`${REQUIREMENTS}`")"
+                "boost_modular_build(SOURCE_PATH `${SOURCE_PATH} REQUIREMENTS `"`${REQUIREMENTS}`" OPTIONS $spacedTargets)"
             )
         }
         elseif ($Name -eq "thread")
         {
             $portfileLines += @(
                 "include(`${CURRENT_INSTALLED_DIR}/share/boost-build/boost-modular-build.cmake)"
-                "boost_modular_build(SOURCE_PATH `${SOURCE_PATH} REQUIREMENTS `"<library>/boost/date_time//boost_date_time`")"
+                "boost_modular_build(SOURCE_PATH `${SOURCE_PATH} REQUIREMENTS `"<library>/boost/date_time//boost_date_time`" OPTIONS $spacedTargets)"
             )
         }
         else
         {
             $portfileLines += @(
                 "include(`${CURRENT_INSTALLED_DIR}/share/boost-build/boost-modular-build.cmake)"
-                "boost_modular_build(SOURCE_PATH `${SOURCE_PATH})"
+                "boost_modular_build(SOURCE_PATH `${SOURCE_PATH} OPTIONS $spacedTargets)"
                 )
         }
     }
-    $portfileLines += @(
-        "include(`${CURRENT_INSTALLED_DIR}/share/boost-vcpkg-helpers/boost-modular-headers.cmake)"
-        "boost_modular_headers(SOURCE_PATH `${SOURCE_PATH})"
-    )
+
+    $portfileLines += @(Get-Content $scriptsDir/boost-modular-headers.cmake)
 
     if ($Name -eq "exception")
     {
@@ -210,6 +211,8 @@ $libraries_found = ls $scriptsDir/boost/libs -directory | % name | % {
         $_
     }
 }
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 mkdir $scriptsDir/downloads -erroraction SilentlyContinue | out-null
 
@@ -309,7 +312,7 @@ foreach ($library in $libraries)
         } | % { "boost-$_" -replace "_","-" } | % {
             if ($_ -match $libsDisabledInUWP)
             {
-                "$_ (windows)"
+                "$_ (!uwp)"
             }
             else
             {
@@ -317,18 +320,26 @@ foreach ($library in $libraries)
             }
         })
 
-        $deps += @("boost-vcpkg-helpers")
-
         $needsBuild = $false
+        $targets = @()
         if ((Test-Path $unpacked/build/Jamfile.v2) -and $library -ne "metaparse")
         {
             $deps += @("boost-build", "boost-modular-build-helper")
             $needsBuild = $true
+
+            $targets = @(Get-Content $unpacked/build/Jamfile.v2 | % {
+                if ($_ -match "^\s*lib (boost_[^ ]*)") {
+                    "build//" + $MATCHES[1]
+                } elseif ($_ -match "^\s*boost-lib ([^ ]*)") {
+                    "build//boost_" + $MATCHES[1]
+                }
+            })
         }
 
         if ($library -eq "python")
         {
             $deps += @("python3")
+            $targets = @("build//boost_python3")
             $needsBuild = $true
         }
         elseif ($library -eq "iostreams")
@@ -348,6 +359,7 @@ foreach ($library in $libraries)
             -Name $library `
             -Hash $hash `
             -Depends $deps `
+            -Targets $targets `
             -NeedsBuild $needsBuild
 
         if ($library -match $libsDisabledInUWP)

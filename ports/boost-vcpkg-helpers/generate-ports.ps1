@@ -314,9 +314,9 @@ foreach ($library in $libraries)
             {
                 "$_ (!uwp)"
             }
-            elseif ($_ -eq "fiber")
+            elseif ($_ -eq "python" -or $_ -eq "fiber")
             {
-                "$_ (!uwp&&!osx)"
+                "$_ (windows)"
             }
             else
             {
@@ -366,13 +366,9 @@ foreach ($library in $libraries)
             -Targets $targets `
             -NeedsBuild $needsBuild
 
-        if ($library -eq "python")
+        if ($library -eq "python" -or $library -eq "fiber")
         {
             $libraries_in_boost_port += @("$library (windows)")
-        }
-        elseif ($library -eq "fiber")
-        {
-            $libraries_in_boost_port += @("$library (!uwp&&!osx)")
         }
         elseif ($library -match $libsDisabledInUWP)
         {

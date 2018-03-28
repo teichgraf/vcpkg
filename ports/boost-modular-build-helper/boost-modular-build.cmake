@@ -26,10 +26,6 @@ function(boost_modular_build)
         message(FATAL_ERROR "Could not find b2 in ${BOOST_BUILD_PATH}")
     endif()
 
-    if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-        list(APPEND _bm_OPTIONS windows-api=store)
-    endif()
-
     set(_bm_DIR ${CURRENT_INSTALLED_DIR}/share/boost-build)
 
     if(EXISTS "${_bm_SOURCE_PATH}/Jamfile.v2")
@@ -79,11 +75,15 @@ function(boost_modular_build)
 
     configure_file(${_bm_DIR}/Jamroot.jam ${_bm_SOURCE_PATH}/Jamroot.jam @ONLY)
 
+    string(REPLACE ";" "\\\\\\\\\\\;" B2_OPTIONS "${_bm_OPTIONS}")
+
     if(VCPKG_CMAKE_SYSTEM_NAME AND NOT VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
         vcpkg_configure_cmake(
             SOURCE_PATH ${CURRENT_INSTALLED_DIR}/share/boost-build
             PREFER_NINJA
             OPTIONS
+                -DVCPKG_PLATFORM_TOOLSET=${VCPKG_PLATFORM_TOOLSET}
+                "-DB2_OPTIONS=${B2_OPTIONS}"
                 "-DB2_EXE=${B2_EXE}"
                 "-DSOURCE_PATH=${_bm_SOURCE_PATH}"
                 "-DBOOST_BUILD_PATH=${BOOST_BUILD_PATH}"
@@ -156,6 +156,11 @@ function(boost_modular_build)
     else()
         list(APPEND _bm_OPTIONS threadapi=pthread)
     endif()
+
+    if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+        list(APPEND _bm_OPTIONS windows-api=store)
+    endif()
+
     set(_bm_OPTIONS_DBG
          -sZLIB_BINARY=zlibd
          -sZLIB_LIBPATH="${CURRENT_INSTALLED_DIR}/debug/lib"
@@ -270,8 +275,6 @@ function(boost_modular_build)
         message(STATUS "Packaging ${TARGET_TRIPLET}-rel")
         file(GLOB REL_LIBS
             ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.lib
-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.a
-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.so
         )
         file(COPY ${REL_LIBS}
             DESTINATION ${CURRENT_PACKAGES_DIR}/lib)
@@ -288,8 +291,6 @@ function(boost_modular_build)
         message(STATUS "Packaging ${TARGET_TRIPLET}-dbg")
         file(GLOB DBG_LIBS
             ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.lib
-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.a
-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.so
         )
         file(COPY ${DBG_LIBS}
             DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib)

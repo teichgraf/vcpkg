@@ -5,27 +5,29 @@ find_path(ZLIB_INCLUDE zlib.h)
 find_path(BZIP2_INCLUDE bzlib.h)
 find_path(ICU_PATH include/unicode/utf.h)
 
-set(VCPKG_PLATFORM_TOOLSET external)
-
-set(B2_OPTIONS)
-
 # Add build type specific options
 if(BUILD_SHARED_LIBS)
-    list(APPEND B2_OPTIONS runtime-link=shared)
-    set(LIB_RUNTIME_LINK "shared")
+    list(APPEND B2_OPTIONS runtime-link=shared link=shared)
 else()
-    list(APPEND B2_OPTIONS runtime-link=static)
-    set(LIB_RUNTIME_LINK "static")
+    list(APPEND B2_OPTIONS runtime-link=static link=static)
 endif()
 
-if(BUILD_SHARED_LIBS)
-    list(APPEND B2_OPTIONS link=shared)
-else()
-    list(APPEND B2_OPTIONS link=static)
+if(NOT CMAKE_SYSTEM_PROCESSOR)
+    set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR})
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")
+if(CMAKE_SIZEOF_VOID_P STREQUAL 8)
     list(APPEND B2_OPTIONS address-model=64)
+else()
+    list(APPEND B2_OPTIONS address-model=32)
+endif()
+
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    list(APPEND B2_OPTIONS architecture=x86)
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+    list(APPEND B2_OPTIONS architecture=arm)
+else()
+    message(FATAL_ERROR "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 list(APPEND B2_OPTIONS target-os=linux toolset=gcc)
@@ -108,7 +110,6 @@ add_custom_target(boost ALL
         --hash
         -q
 
-        architecture=x86
         threading=multi
         threadapi=pthread
         debug-symbols=on
@@ -116,5 +117,5 @@ add_custom_target(boost ALL
 )
 
 install(
-    CODE "file(GLOB LIBS ${CMAKE_CURRENT_BINARY_DIR}/boost/build/*/*.a)\nif(LIBS)\nfile(INSTALL \${LIBS} DESTINATION \"\${CMAKE_INSTALL_PREFIX}/lib\")\nendif()"
+    CODE "file(GLOB LIBS ${CMAKE_CURRENT_BINARY_DIR}/boost/build/*/*.a ${CMAKE_CURRENT_BINARY_DIR}/boost/build/*/*.so.* ${CMAKE_CURRENT_BINARY_DIR}/boost/build/*/*.dylib)\nif(LIBS)\nfile(INSTALL \${LIBS} DESTINATION \"\${CMAKE_INSTALL_PREFIX}/lib\")\nendif()"
 )

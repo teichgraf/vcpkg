@@ -362,9 +362,13 @@ foreach ($library in $libraries)
             -Targets $targets `
             -NeedsBuild $needsBuild
 
-        if ($library -match $libsDisabledInUWP)
+        if ($library -eq "python")
         {
             $libraries_in_boost_port += @("$library (windows)")
+        }
+        elseif ($library -match $libsDisabledInUWP)
+        {
+            $libraries_in_boost_port += @("$library (!uwp)")
         }
         else
         {

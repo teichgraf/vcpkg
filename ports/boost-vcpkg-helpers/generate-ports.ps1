@@ -6,7 +6,7 @@ param (
 
 $scriptsDir = split-path -parent $MyInvocation.MyCommand.Definition
 
-$libsDisabledInUWP = "iostreams|filesystem|thread|context|python|stacktrace|program-options|program_options|coroutine`$|fiber|locale|test|type-erasure|type_erasure|wave|log"
+$libsDisabledInUWP = "iostreams|filesystem|thread|context|python|stacktrace|program-options|program_options|coroutine`$|locale|test|type-erasure|type_erasure|wave|log"
 
 function Generate()
 {
@@ -314,6 +314,10 @@ foreach ($library in $libraries)
             {
                 "$_ (!uwp)"
             }
+            elseif ($_ -eq "fiber")
+            {
+                "$_ (!uwp&&!osx)"
+            }
             else
             {
                 $_
@@ -365,6 +369,10 @@ foreach ($library in $libraries)
         if ($library -eq "python")
         {
             $libraries_in_boost_port += @("$library (windows)")
+        }
+        elseif ($library -eq "fiber")
+        {
+            $libraries_in_boost_port += @("$library (!uwp&&!osx)")
         }
         elseif ($library -match $libsDisabledInUWP)
         {

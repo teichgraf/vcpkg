@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.9)
 project(boost CXX)
 
+if(NOT CMAKE_SYSTEM_NAME)
+    set(CMAKE_SYSTEM_NAME "${CMAKE_HOST_SYSTEM_NAME}")
+endif()
+
+if(NOT CMAKE_SYSTEM_PROCESSOR)
+    set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR})
+endif()
+
 find_path(ZLIB_INCLUDE zlib.h)
 find_path(BZIP2_INCLUDE bzlib.h)
 find_path(ICU_PATH include/unicode/utf.h)
@@ -10,10 +18,6 @@ if(BUILD_SHARED_LIBS)
     list(APPEND B2_OPTIONS runtime-link=shared link=shared)
 else()
     list(APPEND B2_OPTIONS runtime-link=static link=static)
-endif()
-
-if(NOT CMAKE_SYSTEM_PROCESSOR)
-    set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR})
 endif()
 
 if(CMAKE_SIZEOF_VOID_P STREQUAL 8)
@@ -30,7 +34,11 @@ else()
     message(FATAL_ERROR "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
-list(APPEND B2_OPTIONS target-os=linux toolset=gcc)
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    list(APPEND B2_OPTIONS target-os=darwin toolset=gcc)
+else()
+    list(APPEND B2_OPTIONS target-os=linux toolset=gcc)
+endif()
 
 string(REPLACE " " " <compileflags>" CXXFLAGS "${CMAKE_CXX_FLAGS}")
 #set(CXXFLAGS "${CXXFLAGS} <compileflags>-Wno-error=unused-command-line-argument")
@@ -76,6 +84,13 @@ if(DEFINED ENV{NUMBER_OF_PROCESSORS})
 elseif(CMAKE_HOST_LINUX)
     execute_process(
         COMMAND nproc
+        OUTPUT_VARIABLE NUMBER_OF_PROCESSORS
+    )
+    string(REPLACE "\n" "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
+    string(REPLACE " " "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
+elseif(CMAKE_HOST_APPLE)
+    execute_process(
+        COMMAND sysctl -n hw.ncpu
         OUTPUT_VARIABLE NUMBER_OF_PROCESSORS
     )
     string(REPLACE "\n" "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")

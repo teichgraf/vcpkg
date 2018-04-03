@@ -3,12 +3,12 @@ project(libxml2 C)
 
 option(INSTALL_HEADERS "Install public header files" ON)
 
+set(CMAKE_SHARED_LIBRARY_PREFIX)
+set(CMAKE_STATIC_LIBRARY_PREFIX)
+
 find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
-if(WIN32)
-    find_library(ICONV NAMES libiconv)
-    find_library(ICONV_CHARSET NAMES libcharset)
-endif()
+find_package(unofficial-iconv REQUIRED)
 
 set(SOURCES
     buf.c
@@ -71,7 +71,11 @@ file(GLOB PUBLIC_HEADERS include/libxml/*.h)
 list(FILTER PUBLIC_HEADERS EXCLUDE REGEX "xmlexports\\.h$")
 list(APPEND PUBLIC_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/xmlexports.h)
 
-configure_file(include/win32config.h config.h COPYONLY)
+if(WIN32)
+    configure_file(include/win32config.h config.h COPYONLY)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    configure_file("${PORT_DIR}/config.linux.h" config.h COPYONLY)
+endif()
 
 add_library(libxml2 ${SOURCES})
 if(INSTALL_HEADERS)
@@ -79,13 +83,12 @@ if(INSTALL_HEADERS)
 endif()
 target_include_directories(libxml2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} win32/vc10 include ${LIBLZMA_INCLUDE_DIRS})
 target_link_libraries(libxml2 PRIVATE
+    unofficial::iconv::libcharset unofficial::iconv::libiconv
     ZLIB::ZLIB
     ${LIBLZMA_LIBRARIES}
 )
 if(WIN32)
     target_link_libraries(libxml2 PRIVATE
-        ${ICONV}
-        ${ICONV_CHARSET}
         wsock32.lib
         ws2_32.lib
     )

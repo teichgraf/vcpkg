@@ -82,13 +82,15 @@ endif()
 vcpkg_copy_pdbs()
 
 # Install headers
-file(INSTALL ${SOURCE_PATH}/include DESTINATION ${CURRENT_PACKAGES_DIR}/include RENAME opus)
+file(INSTALL ${SOURCE_PATH}/include/ DESTINATION ${CURRENT_PACKAGES_DIR}/include)
 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
-    file(READ ${CURRENT_PACKAGES_DIR}/include/opus/opus_defines.h OPUS_DEFINES)
+    file(READ ${CURRENT_PACKAGES_DIR}/include/opus_defines.h OPUS_DEFINES)
     string(REPLACE "define OPUS_EXPORT" "define OPUS_EXPORT __declspec(dllimport)" OPUS_DEFINES "${OPUS_DEFINES}")
-    file(WRITE ${CURRENT_PACKAGES_DIR}/include/opus/opus_defines.h "${OPUS_DEFINES}")
+    file(WRITE ${CURRENT_PACKAGES_DIR}/include/opus_defines.h "${OPUS_DEFINES}")
 endif()
+
+vcpkg_copy_pdbs()
 
 # Handle copyright
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/opus RENAME copyright)

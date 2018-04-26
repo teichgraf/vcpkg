@@ -17,6 +17,7 @@ vcpkg_apply_patches(
         ${CMAKE_CURRENT_LIST_DIR}/create-lib-libraries.patch
         ${CMAKE_CURRENT_LIST_DIR}/detect-openssl.patch
         ${CMAKE_CURRENT_LIST_DIR}/configure_opencv.patch
+        ${CMAKE_CURRENT_LIST_DIR}/detect-opus.patch
 )
 
 vcpkg_find_acquire_program(YASM)
@@ -75,6 +76,12 @@ if("opencl" IN_LIST FEATURES)
     set(OPTIONS "${OPTIONS} --enable-opencl")
 else()
     set(OPTIONS "${OPTIONS} --disable-opencl")
+endif()
+
+if("opus" IN_LIST FEATURES)
+    set(OPTIONS "${OPTIONS} --enable-libopus")
+else()
+    set(OPTIONS "${OPTIONS} --disable-libopus")
 endif()
 
 if("lzma" IN_LIST FEATURES)

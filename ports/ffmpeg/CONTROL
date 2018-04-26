@@ -25,6 +25,10 @@ Feature: opencl
 Build-Depends: opencl
 Description: opencl support in ffmpeg
 
+Feature: opus
+Build-Depends: opus
+Description: libopus support in ffmpeg
+
 Feature: nonfree
 Description: allow nonfree and unredistributable libraries
 

@@ -115,8 +115,8 @@ if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
     endif()
 endif()
 
-set(OPTIONS_DEBUG "") # Note: --disable-optimizations can't be used due to http://ffmpeg.org/pipermail/libav-user/2013-March/003945.html
-set(OPTIONS_RELEASE "")
+set(OPTIONS_DEBUG "--disable-optimizations") # Note: --disable-optimizations can't be used due to http://ffmpeg.org/pipermail/libav-user/2013-March/003945.html
+set(OPTIONS_RELEASE "--disable-optimizations")
 
 set(OPTIONS "${OPTIONS} --extra-cflags=-DHAVE_UNISTD_H=0")
 
